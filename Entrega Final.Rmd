@@ -1,0 +1,609 @@
+---
+title: "intento 3"
+author: "Camila"
+date: "2025-11-22"
+output: html_document
+---
+
+```{r}
+knitr::opts_chunk$set(
+echo = TRUE,
+message = FALSE,
+warning = FALSE
+)
+
+library(rio)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+```
+```{r}
+peru_raw <- import("PER_2021_LAPOP_AmericasBarometer_v1.2_w (1).dta")
+```
+
+```{r}
+str(peru_raw)
+```
+
+```{r}
+peru <- peru_raw %>%
+select(pais, wvsi2, b6, anestg, pn4, exc6, exc7new)
+```
+
+```{r}
+names(peru) <- c(
+"Pais",
+"Participacion", # wvsi2
+"Respeto", # b6
+"Confianza", # anestg
+"Tolerancia", # pn4
+"Transparencia", # exc6
+"Percepcion" # exc7new
+)
+
+head(peru)
+```
+```{r}
+colSums(is.na(peru))
+```
+```{r}
+peru_limpio <- peru %>% drop_na(Participacion)
+```
+
+```{r}
+peru_limpio <- peru %>% filter(!if_all(everything(), is.na))
+```
+
+```{r}
+colSums(is.na(peru_limpio))
+```
+```{r}
+peru_cambio <- peru_limpio %>% 
+  mutate(across(everything(), ~ .x + 1))
+```
+
+```{r}
+peru_final <- peru_cambio %>% 
+  mutate(across(everything(), ~ ifelse(is.na(.x), 0, .x)))
+```
+
+```{r}
+head(peru_final)
+```
+```{r}
+modelo1 <- lm(
+  Percepcion ~ Confianza + Participacion + Respeto + Transparencia + Tolerancia,
+  data = peru_final
+)
+
+summary(modelo1)
+```
+```{r}
+par(mfrow = c(2, 2))
+plot(modelo1)
+par(mfrow = c(1, 1))
+```
+GRÁFICO DE DISPERSIÓN 
+```{r}
+library(ggplot2)
+ggplot(peru_final, aes(x = Confianza, y = Percepcion)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "Percepción vs Confianza",
+    x = "Confianza en las instituciones",
+    y = "Percepción de la corrupción"
+  )
+```
+```{r}
+ggplot(peru_final, aes(x = Participacion, y = Percepcion)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "Percepción vs Participación",
+    x = "Participación política/social",
+    y = "Percepción de la corrupción"
+  )
+```
+```{r}
+ggplot(peru_final, aes(x = Respeto, y = Percepcion)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "Percepción vs Respeto",
+    x = "Respeto a las instituciones",
+    y = "Percepción de la corrupción"
+  )
+```
+```{r}
+ggplot(peru_final, aes(x = Transparencia, y = Percepcion)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "Percepción vs Transparencia",
+    x = "Transparencia del Estado",
+    y = "Percepción de la corrupción"
+  )
+```
+```{r}
+ggplot(peru_final, aes(x = Tolerancia, y = Percepcion)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "Percepción vs Tolerancia a la corrupción",
+    x = "Tolerancia hacia la corrupción",
+    y = "Percepción de la corrupción"
+  )
+```
+GRÁFICO DE LÍNEAS
+```{r}
+peru_line <- peru_final %>%
+  group_by(Confianza) %>%
+  summarise(media_percepcion = mean(Percepcion))
+
+ggplot(peru_line, aes(x = Confianza, y = media_percepcion)) +
+  geom_line(color = "blue", linewidth = 1.2) +
+  geom_point(size = 2) +
+  labs(
+    title = "Media de Percepción según niveles de Confianza",
+    x = "Confianza",
+    y = "Percepción promedio"
+  )
+```
+```{r}
+peru_line <- peru_final %>%
+  group_by(Participacion) %>%
+  summarise(media_percepcion = mean(Percepcion))
+
+ggplot(peru_line, aes(x = Participacion, y = media_percepcion)) +
+  geom_line(color = "blue", linewidth = 1.2) +
+  geom_point(size = 2) +
+  labs(
+    title = "Media de Percepción según niveles de Confianza",
+    x = "Confianza",
+    y = "Percepción promedio"
+  )
+```
+```{r}
+peru_line <- peru_final %>%
+  group_by(Respeto) %>%
+  summarise(media_percepcion = mean(Percepcion))
+
+ggplot(peru_line, aes(x = Respeto, y = media_percepcion)) +
+  geom_line(color = "blue", linewidth = 1.2) +
+  geom_point(size = 2) +
+  labs(
+    title = "Media de Percepción según niveles de Confianza",
+    x = "Confianza",
+    y = "Percepción promedio"
+  )
+```
+```{r}
+peru_line <- peru_final %>%
+  group_by(Transparencia) %>%
+  summarise(media_percepcion = mean(Percepcion))
+
+ggplot(peru_line, aes(x = Transparencia, y = media_percepcion)) +
+  geom_line(color = "blue", linewidth = 1.2) +
+  geom_point(size = 2) +
+  labs(
+    title = "Media de Percepción según niveles de Confianza",
+    x = "Confianza",
+    y = "Percepción promedio"
+  )
+```
+```{r}
+peru_line <- peru_final %>%
+  group_by(Tolerancia) %>%
+  summarise(media_percepcion = mean(Percepcion))
+
+ggplot(peru_line, aes(x = Tolerancia, y = media_percepcion)) +
+  geom_line(color = "blue", linewidth = 1.2) +
+  geom_point(size = 2) +
+  labs(
+    title = "Media de Percepción según niveles de Confianza",
+    x = "Confianza",
+    y = "Percepción promedio"
+  )
+```
+GRÁFICO DE BARRAS
+```{r}
+library(dplyr)
+
+peru_error <- peru_final %>%
+  group_by(Tolerancia) %>%
+  summarise(
+    media = mean(Percepcion),
+    se = sd(Percepcion) / sqrt(n())
+  )
+
+ggplot(peru_error, aes(x = Tolerancia, y = media)) +
+  geom_col(fill = "lightblue") +
+  geom_errorbar(aes(ymin = media - se, ymax = media + se), width = 0.2) +
+  labs(
+    title = "Percepción promedio con barras de error por nivel de Tolerancia",
+    x = "Tolerancia",
+    y = "Media de Percepción"
+  )
+```
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+# Seleccionamos variables independientes
+independientes <- c("Confianza", "Participacion", "Respeto", "Transparencia", "Tolerancia")
+
+# Reorganizamos a formato largo
+peru_B <- peru_final %>%
+  pivot_longer(
+    cols = all_of(independientes),
+    names_to = "Variable",
+    values_to = "Nivel"
+  )
+```
+ESTE CÓDIGO
+```{r}
+peru_all <- peru_B %>%
+  group_by(Variable, Nivel) %>%
+  summarise(
+    media = mean(Percepcion),
+    se = sd(Percepcion) / sqrt(n())
+  )
+```
+por eso sale 0
+```{r}
+ggplot(peru_all, aes(x = factor(Nivel), y = media, fill = Variable)) +
+  geom_col(position = position_dodge(width = 0.8)) +
+  geom_errorbar(
+    aes(ymin = media - se, ymax = media + se),
+    position = position_dodge(width = 0.8),
+    width = 0.2
+  ) +
+  labs(
+    title = "Media de Percepción por niveles de todas las variables independientes",
+    x = "Nivel de la variable",
+    y = "Media de Percepción"
+  ) +
+  theme_bw()
+```
+
+GRÁFICO DE DENSIDAD
+deberiamos quitar 0
+```{r}
+ggplot(peru_final, aes(x = Percepcion, fill = factor(Tolerancia))) +
+  geom_density(alpha = 0.4) +
+  labs(
+    title = "Densidad de Percepción por niveles de Tolerancia",
+    x = "Percepción",
+    y = "Densidad",
+    fill = "Tolerancia"
+  )
+```
+```{r}
+ggplot(peru_final, aes(x = Percepcion)) +
+  geom_density(fill = "lightgreen", alpha = 0.6) +
+  labs(
+    title = "Densidad de Percepción de corrupción",
+    x = "Percepción",
+    y = "Densidad"
+  )
+```
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+independientes <- c("Confianza", "Participacion", "Respeto",
+                    "Transparencia", "Tolerancia")
+
+peru_all2 <- peru_final %>%
+  pivot_longer(
+    cols = all_of(independientes),
+    names_to = "Variable",
+    values_to = "Valor"
+  )
+```
+
+```{r}
+ggplot(peru_all2, aes(x = Valor, fill = Variable)) +
+  geom_density(alpha = 0.35) +
+  labs(
+    title = "Densidad de las variables independientes",
+    x = "Valor de la variable",
+    y = "Densidad",
+    fill = "Variable"
+  ) +
+  theme_bw()
+```
+```{r}
+independientes <- c("Confianza", "Participacion", "Respeto",
+                    "Transparencia", "Tolerancia")
+
+peru_long <- peru_final %>%
+  pivot_longer(
+    cols = all_of(independientes),
+    names_to = "Variable",
+    values_to = "Nivel"
+  )
+peru_line <- peru_long %>%
+  group_by(Variable, Nivel) %>%
+  summarise(media = mean(Percepcion))
+
+ggplot(peru_line, aes(x = Nivel, y = media, color = Variable, group = Variable)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 2) +
+  labs(
+    title = "Percepción promedio por niveles de cada variable independiente",
+    x = "Nivel",
+    y = "Media de Percepción"
+  ) +
+  theme_bw()
+```
+```{r}
+library(sf)
+library(rnaturalearth)
+library(dplyr)
+library(rnaturalearthdata)
+library(ggplot2)
+```
+para que este grafico
+```{r}
+world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
+plot(world["admin"])
+```
+
+```{r}
+library(sf)
+library(rnaturalearth)
+library(ggplot2)
+library(dplyr)
+
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
+peru_shape <- world %>% filter(admin == "Peru")
+
+media_peru <- peru_final %>% summarise(media = mean(Percepcion)) %>% pull(media)
+
+peru_shape$media_percepcion <- media_peru
+
+ggplot(peru_shape) +
+  geom_sf(aes(fill = media_percepcion)) +
+  scale_fill_viridis_c(option = "C") +
+  labs(
+    title = "Percepción promedio de corrupción en Perú",
+    fill = "Percepción"
+  ) +
+  theme_bw()
+```
+```{r}
+library(dplyr)
+library(ggplot2)
+
+vars_corr <- peru_final %>%
+  select(Percepcion, Confianza, Participacion, Respeto, Transparencia, Tolerancia)
+```
+todoxtodo
+```{r}
+corr_matrix <- cor(vars_corr, use = "pairwise.complete.obs")
+corr_matrix
+```
+```{r}
+corr_df <- as.data.frame(as.table(round(corr_matrix, 2)))
+colnames(corr_df) <- c("Var1", "Var2", "value")
+head(corr_df)
+```
+```{r}
+ggplot(corr_df, aes(x = Var1, y = Var2, fill = value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(
+    low = "blue", mid = "white", high = "red",
+    midpoint = 0, limits = c(-1, 1),
+    name = "Correlación"
+  ) +
+  geom_text(aes(label = value), size = 3) +
+  labs(
+    title = "Matriz de correlación entre Percepción y variables independientes",
+    x = "",
+    y = ""
+  ) +
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+```
+```{r}
+library(dplyr)
+library(psych)        
+library(FactoMineR) 
+library(factoextra)  
+```
+
+```{r}
+Peru_factor <- peru_final %>%
+  select(Confianza, Participacion, Respeto, Transparencia, Tolerancia)
+
+```
+
+```{r}
+str(Peru_factor)
+```
+```{r}
+Peru_factor_scaled <- scale(Peru_factor)
+```
+
+```{r}
+KMO(Peru_factor_scaled)  
+cortest.bartlett(Peru_factor_scaled) 
+```
+```{r}
+fa.parallel(Peru_factor_scaled, fa = "fa") 
+```
+```{r}
+fa_result <- fa(Peru_factor_scaled, nfactors = 2, rotate = "varimax")
+fa_result
+```
+```{r}
+library(ggplot2)
+
+loadings_df <- as.data.frame(fa_result$loadings[1:ncol(Peru_factor_scaled), ])
+loadings_df$Variable <- rownames(loadings_df)
+
+ggplot(loadings_df, aes(x = MR1, y = MR2, label = Variable)) +  # MR1 y MR2 = nombres de los factores
+  geom_point(color = "blue", size = 3) +
+  geom_text(vjust = -0.5) +
+  labs(
+    title = "Cargas factoriales (EFA)",
+    x = "Factor 1",
+    y = "Factor 2"
+  ) +
+  theme_minimal()
+```
+```{r}
+scores <- fa_result$scores
+peru_final$Factor1 <- scores[,1]
+peru_final$Factor2 <- scores[,2]
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(factoextra)
+library(cluster)
+library(tidyr)
+```
+
+```{r}
+cluster_vars <- peru_final %>%
+  select(Confianza, Participacion, Respeto, Transparencia, Tolerancia)
+```
+
+```{r}
+cluster_scaled <- scale(cluster_vars)
+```
+
+```{r}
+# Método del codo (WSS)
+fviz_nbclust(cluster_scaled, kmeans, method = "wss") +
+  labs(title = "Método del codo para determinar K óptimo")
+
+# Método de la silueta
+fviz_nbclust(cluster_scaled, kmeans, method = "silhouette") +
+  labs(title = "Índice de Silueta para determinar K")
+```
+```{r}
+set.seed(123)
+k2 <- kmeans(cluster_scaled, centers = 2, nstart = 25)
+```
+
+```{r}
+peru_final$cluster_k2 <- factor(k2$cluster)
+```
+
+```{r}
+k2$size
+```
+```{r}
+fviz_cluster(
+  k2, 
+  data = cluster_scaled, 
+  geom = "point",
+  ellipse.type = "convex",
+  show.clust.cent = TRUE,
+  main = "Visualización de clusters mediante PCA (K=2)"
+)
+```
+```{r}
+cluster_profile <- peru_final %>%
+  group_by(cluster_k2) %>%
+  summarise(
+    Confianza = mean(Confianza),
+    Participacion = mean(Participacion),
+    Respeto = mean(Respeto),
+    Transparencia = mean(Transparencia),
+    Tolerancia = mean(Tolerancia)
+  )
+
+cluster_profile
+```
+```{r}
+agnes_res <- agnes(cluster_scaled, method = "ward")
+```
+
+```{r}
+# AGNES
+pltree(agnes_res, main = "Dendrograma AGNES (Ward)", cex = 0.6)
+```
+
+
+```{r}
+agnes_clusters <- cutree(as.hclust(agnes_res), k = 2)
+table(agnes_clusters)
+
+```
+
+```{r}
+library(cluster)
+
+# Datos estandarizados
+cluster_vars <- peru_final %>%
+  select(Confianza, Participacion, Respeto, Transparencia, Tolerancia)
+
+cluster_scaled <- scale(cluster_vars)
+
+# DIANA
+diana_res <- diana(cluster_scaled)
+
+# Dendrograma
+pltree(diana_res, 
+       main = "Dendrograma DIANA (Divisivo)", 
+       cex = 0.6)
+
+# Cortar en 2 clusters
+diana_clusters <- cutree(as.hclust(diana_res), k = 2)
+table(diana_clusters)
+
+```
+```{r}
+pam_res <- pam(cluster_scaled, k = 2)
+```
+
+```{r}
+fviz_cluster(pam_res, geom = "point",
+             main = "Clusters PAM (k = 2)")
+```
+```{r}
+fviz_silhouette(pam_res)
+```
+```{r}
+pam_res$medoids
+```
+```{r}
+peru_final$cluster_pam <- pam_res$clustering
+```
+
+```{r}
+cluster_profile_pam <- peru_final %>%
+  group_by(cluster_pam) %>%
+  summarise(
+    Confianza     = mean(Confianza),
+    Participacion = mean(Participacion),
+    Respeto       = mean(Respeto),
+    Transparencia = mean(Transparencia),
+    Tolerancia    = mean(Tolerancia)
+  )
+
+cluster_profile_pam
+```
+
+```{r}
+table(Kmeans = peru_final$cluster_k2, AGNES = agnes_clusters)
+```
+```{r}
+table(Kmeans = peru_final$cluster_k2, PAM = peru_final$cluster_pam)
+```
+```{r}
+cluster_profile
+cluster_profile_pam
+```
+
